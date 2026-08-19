@@ -149,6 +149,39 @@ For a plain Docker deployment without Compose, pass the three
 `NEXT_PUBLIC_*` values as build arguments, then provide all values from
 `.env.example` as runtime environment variables.
 
+### Hostinger Compose from URL
+
+Hostinger can download the public repository as a remote Docker build context,
+so this deployment does not require GitHub Actions, a container registry, or a
+GitHub login on the VPS.
+
+1. In Hostinger Docker Manager, choose **Compose > Compose from URL** and use:
+
+   ```text
+   https://raw.githubusercontent.com/KhBayazidAhmed/zernflow/main/compose.hostinger.yaml
+   ```
+
+2. Configure these environment variables in Hostinger before deploying:
+
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - `NEXT_PUBLIC_APP_URL` (the public HTTPS application URL)
+   - `SUPABASE_SERVICE_ROLE_KEY`
+   - `CRON_SECRET`
+   - `AI_GATEWAY_API_KEY` (optional)
+   - `APP_PORT` (optional, defaults to `3000`)
+   - `SOURCE_REPOSITORY_URL` (optional; use a public fork URL ending in
+     `.git#main` when deploying modified source)
+
+`SUPABASE_SERVICE_ROLE_KEY`, `CRON_SECRET`, and `AI_GATEWAY_API_KEY` are runtime
+secrets. They are read only when the container runs and are not included in the
+image. The `NEXT_PUBLIC_*` values are intentionally public and are supplied as
+build arguments by Hostinger because Next.js embeds them in browser code.
+
+For updates, redeploy or rebuild the application in Hostinger. Docker fetches
+the latest source from `main` and builds a fresh local image. A plain container
+restart does not rebuild the source.
+
 ## Architecture
 
 ```
