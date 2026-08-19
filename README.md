@@ -169,7 +169,7 @@ GitHub login on the VPS.
    - `SUPABASE_SERVICE_ROLE_KEY`
    - `CRON_SECRET`
    - `AI_GATEWAY_API_KEY` (optional)
-   - `APP_PORT` (optional, defaults to `3000`)
+   - `HOST_PORT` (optional, defaults to `3100`; choose any unused VPS port)
    - `SOURCE_REPOSITORY_URL` (optional; use a public fork URL ending in
      `.git#main` when deploying modified source)
 
