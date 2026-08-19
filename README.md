@@ -35,7 +35,7 @@ ZernFlow is an open-source alternative to ManyChat. Build visual chatbot flows, 
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 24+
 - A [Supabase](https://supabase.com) project (free tier works)
 - A [Zernio](https://zernio.com) API key (entered in Settings after setup)
 - A [Vercel AI Gateway](https://vercel.com/ai-gateway) key (optional, for AI node, entered in Settings or env)
@@ -52,13 +52,38 @@ npm install
 
 2. **Set up Supabase**
 
-Create a free project at [supabase.com](https://supabase.com). Then run the SQL migrations in the Supabase SQL editor:
+Create a free project at [supabase.com](https://supabase.com), then apply the database migrations using either method below.
+
+#### Supabase SQL Editor
+
+For a new ZernFlow database:
+
+1. Open your project in the [Supabase dashboard](https://supabase.com/dashboard).
+2. Select **SQL Editor**, then **New query**.
+3. Copy the complete contents of `supabase/migrations/ALL_MIGRATIONS.sql` into the editor.
+4. Select **Run** and wait for the query to finish successfully.
+
+For a database that already has ZernFlow tables, run only the new numbered files
+from `supabase/migrations/` in ascending order. Do not rerun
+`ALL_MIGRATIONS.sql` over an existing schema.
+
+#### Supabase CLI
+
+Install or run the latest CLI, authenticate, link the project, and push pending migrations:
 
 ```bash
-# Run every numbered file in supabase/migrations/ in order, 00001 upwards.
-# Skipping later ones leaves features broken: 00016, for example, is what
-# lets a WhatsApp channel be stored at all.
+npx supabase@latest login
+npx supabase@latest link --project-ref your-project-ref
+npx supabase@latest db push
 ```
+
+Find the project reference in the Supabase URL: for
+`https://your-project-ref.supabase.co`, it is `your-project-ref`. The CLI may
+prompt for the project's database password. Run `db push` again whenever new
+numbered migration files are added.
+
+Migration `00017_backfill_user_workspaces.sql` provisions a workspace for auth
+accounts created before the initial database migration was installed.
 
 3. **Configure environment**
 
@@ -85,6 +110,44 @@ npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000), sign up, and start building flows.
+
+## Docker Deployment
+
+The production image uses Next.js standalone output and runs as an unprivileged
+user. Docker Compose also enables a read-only root filesystem, drops Linux
+capabilities, and configures an application health check.
+
+1. Copy the environment template and provide production values:
+
+```bash
+cp .env.example .env
+```
+
+Set `NEXT_PUBLIC_APP_URL` to the public HTTPS URL of the deployment. The
+`NEXT_PUBLIC_SUPABASE_*` values are embedded into the browser bundle during the
+image build; the service-role key and other secrets are provided only when the
+container starts.
+
+2. Build and start the service:
+
+```bash
+docker compose up -d --build
+```
+
+3. Confirm the deployment is healthy:
+
+```bash
+docker compose ps
+curl --fail http://localhost:${APP_PORT:-3000}/api/health
+```
+
+To publish on another host port, set `APP_PORT` in `.env`. Run scheduled jobs
+from your platform's scheduler by calling `/api/cron/jobs` and
+`/api/cron/sequences` with `Authorization: Bearer $CRON_SECRET`.
+
+For a plain Docker deployment without Compose, pass the three
+`NEXT_PUBLIC_*` values as build arguments, then provide all values from
+`.env.example` as runtime environment variables.
 
 ## Architecture
 
